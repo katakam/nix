@@ -2,5 +2,5 @@
 
 {
   networking.networkmanager.enable = true;
-  networking.hostName = "um790";
+  networking.hostName = "vkk";
 }
