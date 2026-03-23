@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IM8 Architect Copilot — GovTech Singapore</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#020a14;
+  --surface:#071222;
+  --surface2:#0b1929;
+  --border:#132033;
+  --border2:#1e3a55;
+  --green:#22c55e;
+  --green-dim:#16a34a;
+  --green-bg:#051a0d;
+  --cyan:#38bdf8;
+  --cyan-bg:#021824;
+  --amber:#f59e0b;
+  --amber-bg:#1a1005;
+  --red:#f87171;
+  --red-bg:#1a0505;
+  --muted:#4a6080;
+  --muted2:#2a4060;
+  --text:#94a3b8;
+  --text2:#cbd5e1;
+  --bright:#e2e8f0;
+  --font:ui-monospace,"Cascadia Code","Fira Code","JetBrains Mono",monospace;
+}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font);
+  font-size:12px;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  line-height:1.5;
+}
+
+/* ─── TOPBAR ─── */
+#topbar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 14px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+  min-height:44px;
+}
+
+.logo-text{
+  color:var(--cyan);
+  font-weight:700;
+  font-size:11px;
+  letter-spacing:.12em;
+  white-space:nowrap;
+  border:1px solid var(--border2);
+  padding:3px 8px;
+  border-radius:2px;
+}
+
+.logo-sub{
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:.06em;
+  white-space:nowrap;
+  display:none;
+}
+
+#search-wrap{
+  flex:1;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:var(--bg);
+  border:1px solid var(--border2);
+  border-radius:3px;
+  padding:0 10px;
+  max-width:680px;
+}
+
+#search-wrap .prompt{
+  color:var(--green);
+  font-size:12px;
+  font-weight:700;
+  white-space:nowrap;
+}
+
+#cmd{
+  flex:1;
+  background:transparent;
+  border:none;
+  outline:none;
+  color:var(--bright);
+  font-family:var(--font);
+  font-size:12px;
+  caret-color:var(--green);
+  padding:6px 0;
+}
+#cmd::placeholder{color:var(--muted)}
+
+#run-btn{
+  background:var(--green-dim);
+  color:#000;
+  border:none;
+  padding:5px 14px;
+  font-family:var(--font);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.08em;
+  cursor:pointer;
+  border-radius:2px;
+  white-space:nowrap;
+  transition:background .15s;
+}
+#run-btn:hover{background:var(--green)}
+
+.topbar-actions{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  margin-left:auto;
+}
+
+.icon-btn{
+  background:transparent;
+  border:1px solid var(--border2);
+  color:var(--muted);
+  cursor:pointer;
+  padding:4px 8px;
+  font-size:10px;
+  border-radius:2px;
+  font-family:var(--font);
+  letter-spacing:.05em;
+  transition:color .15s,border-color .15s;
+  white-space:nowrap;
+}
+.icon-btn:hover{color:var(--text2);border-color:var(--muted)}
+.icon-btn.active{color:var(--cyan);border-color:var(--cyan)}
+
+/* ─── STATUSBAR ─── */
+#statusbar{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:2px 14px;
+  background:#030c18;
+  border-bottom:1px solid var(--border);
+  font-size:10px;
+  color:var(--muted);
+  flex-shrink:0;
+  min-height:22px;
+}
+
+.status-item{display:flex;align-items:center;gap:5px}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0}
+.dot.warn{background:var(--amber)}
+.dot.err{background:var(--red)}
+.dot.off{background:var(--muted2)}
+
+#sb-right{margin-left:auto;display:flex;gap:16px}
+
+/* ─── FILTER BAR ─── */
+#filterbar{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 10px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+  overflow-x:auto;
+  min-height:34px;
+}
+#filterbar::-webkit-scrollbar{height:2px}
+#filterbar::-webkit-scrollbar-thumb{background:var(--border2)}
+
+.filter-label{
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:.08em;
+  white-space:nowrap;
+  margin-right:2px;
+}
+
+.filter-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:2px 9px;
+  border:1px solid var(--border2);
+  border-radius:10px;
+  font-size:10px;
+  cursor:pointer;
+  color:var(--muted);
+  background:transparent;
+  font-family:var(--font);
+  white-space:nowrap;
+  transition:all .12s;
+  flex-shrink:0;
+}
+.filter-chip:hover{color:var(--text2);border-color:var(--muted)}
+.filter-chip.active{background:var(--cyan-bg);color:var(--cyan);border-color:var(--cyan)}
+.filter-chip .chip-count{
+  background:var(--border);
+  border-radius:6px;
+  padding:0 4px;
+  font-size:9px;
+}
+.filter-chip.active .chip-count{background:var(--border2)}
+
+/* ─── MAIN ─── */
+#container{
+  display:flex;
+  flex:1;
+  overflow:hidden;
+}
+
+/* ─── LEFT ─── */
+#left{
+  width:340px;
+  min-width:220px;
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  flex-shrink:0;
+}
+
+.panel-header{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  background:#040f1e;
+  border-bottom:1px solid var(--border);
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  user-select:none;
+  flex-shrink:0;
+  cursor:pointer;
+}
+.panel-header:hover{color:var(--text)}
+.chevron{font-size:8px;transition:transform .18s;margin-right:1px}
+.collapsed .chevron{transform:rotate(-90deg)}
+.panel-count{margin-left:auto;font-size:10px;color:var(--muted)}
+
+.panel-body{
+  overflow-y:auto;
+  flex-shrink:0;
+}
+.panel-body.hidden{display:none}
+
+/* context tokens */
+#ctx-body{padding:7px 10px;max-height:72px;overflow-y:auto}
+.ctx-tok{
+  display:inline-block;
+  background:#0a1e38;
+  border:1px solid var(--border2);
+  color:var(--cyan);
+  border-radius:2px;
+  padding:1px 6px;
+  margin:2px 2px 2px 0;
+  font-size:10px;
+}
+
+/* domain tags */
+#dom-body{padding:7px 10px;max-height:72px;overflow-y:auto}
+.dom-tag{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  background:var(--green-bg);
+  border:1px solid var(--green-dim);
+  color:var(--green);
+  border-radius:2px;
+  padding:1px 7px;
+  margin:2px 2px 2px 0;
+  font-size:10px;
+}
+
+/* controls list */
+#list-section{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  min-height:0;
+}
+#list-body{
+  flex:1;
+  overflow-y:auto;
+  max-height:none;
+}
+
+.ctrl-item{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  padding:7px 10px;
+  cursor:pointer;
+  border-left:2px solid transparent;
+  transition:background .1s,border-color .1s;
+}
+.ctrl-item:hover{background:var(--surface2);border-left-color:var(--muted2)}
+.ctrl-item.active{background:#071e38;border-left-color:var(--cyan)}
+.ctrl-item+.ctrl-item{border-top:1px solid #0d1e2e}
+
+.ci-id{
+  color:var(--amber);
+  font-size:10px;
+  min-width:56px;
+  white-space:nowrap;
+  padding-top:1px;
+  font-weight:600;
+}
+
+.ci-body{flex:1;min-width:0}
+.ci-title{color:var(--text2);font-size:11px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-group{color:var(--muted);font-size:9px;margin-top:1px;letter-spacing:.04em}
+
+.ci-badge{
+  white-space:nowrap;
+  font-size:9px;
+  padding:2px 6px;
+  border-radius:8px;
+  border:1px solid;
+  margin-top:1px;
+  flex-shrink:0;
+}
+.badge-req{color:var(--green);border-color:var(--green-dim);background:var(--green-bg)}
+.badge-guide{color:var(--muted);border-color:var(--muted2);background:transparent}
+
+/* ─── EMPTY LEFT ─── */
+.left-empty{
+  padding:20px 14px;
+  color:var(--muted);
+  font-size:11px;
+  text-align:center;
+  line-height:1.8;
+}
+
+/* ─── RIGHT ─── */
+#right{
+  flex:1;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+}
+
+/* landing */
+#landing{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:30px;
+  text-align:center;
+}
+
+.ascii-logo{
+  font-size:10px;
+  line-height:1.4;
+  color:var(--border2);
+  letter-spacing:.04em;
+  margin-bottom:4px;
+}
+
+.landing-title{color:var(--cyan);font-size:14px;font-weight:700;letter-spacing:.05em}
+.landing-sub{color:var(--muted);font-size:11px;max-width:400px;line-height:1.7}
+.landing-examples{
+  margin-top:8px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  justify-content:center;
+}
+.ex-chip{
+  background:var(--surface);
+  border:1px solid var(--border2);
+  color:var(--text);
+  padding:4px 12px;
+  border-radius:2px;
+  font-size:11px;
+  cursor:pointer;
+  transition:all .12s;
+}
+.ex-chip:hover{border-color:var(--cyan);color:var(--cyan)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.cursor{animation:blink 1s step-end infinite;color:var(--green)}
+
+/* detail view */
+#detail{
+  flex:1;
+  padding:20px 22px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.det-breadcrumb{color:var(--muted);font-size:10px;letter-spacing:.06em}
+.det-breadcrumb span{color:var(--amber)}
+
+.det-header{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.det-id{color:var(--amber);font-size:11px;font-weight:700;letter-spacing:.06em;white-space:nowrap}
+.det-title{color:var(--bright);font-size:15px;font-weight:700;line-height:1.3}
+.det-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px}
+.det-group-tag{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--green-bg);border:1px solid var(--green-dim);
+  color:var(--green);border-radius:2px;padding:2px 8px;font-size:10px;
+}
+.det-type-tag{
+  display:inline-flex;align-items:center;
+  border-radius:2px;padding:2px 8px;font-size:10px;border:1px solid;
+}
+.det-type-tag.req{color:var(--green);border-color:var(--green-dim);background:var(--green-bg)}
+.det-type-tag.guide{color:var(--muted);border-color:var(--muted2)}
+
+.det-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:3px;
+  overflow:hidden;
+}
+.det-card-hdr{
+  padding:6px 12px;
+  background:#040f1e;
+  border-bottom:1px solid var(--border);
+  font-size:9px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.det-card-hdr .icon{font-size:11px}
+.det-card-body{padding:12px 14px;line-height:1.7;color:var(--text2);font-size:12px}
+.det-card-body p{margin:0}
+.det-card-body ul{padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.det-card-body li::marker{color:var(--green)}
+
+.det-params{display:flex;flex-direction:column;gap:6px;padding:10px 14px}
+.param-row{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  font-size:11px;
+  padding:5px 8px;
+  background:#040f1e;
+  border-radius:2px;
+  border:1px solid var(--border);
+}
+.param-id{color:var(--amber);min-width:120px;font-size:10px;font-weight:600}
+.param-type{color:var(--cyan);font-size:10px;min-width:90px}
+.param-desc{color:var(--text);flex:1}
+
+code{
+  background:#0a1e38;
+  color:var(--cyan);
+  padding:1px 5px;
+  border-radius:2px;
+  font-family:var(--font);
+  font-size:11px;
+}
+
+/* ─── SCROLLBARS ─── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted2)}
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.fade-up{animation:fadeUp .18s ease both}
+
+/* ─── RESIZE HANDLE ─── */
+#resize{
+  width:4px;
+  background:var(--border);
+  cursor:col-resize;
+  flex-shrink:0;
+  transition:background .15s;
+}
+#resize:hover{background:var(--border2)}
+
+/* ─── DOMAIN ICONS ─── */
+.di-ac::before{content:"🔐"}
+.di-as::before{content:"🛡"}
+.di-br::before{content:"💾"}
+.di-ck::before{content:"🔑"}
+.di-cs::before{content:"📦"}
+.di-dc::before{content:"🏢"}
+.di-dp::before{content:"🗄"}
+.di-ga::before{content:"🤖"}
+.di-hr::before{content:"👥"}
+.di-is::before{content:"🖥"}
+.di-lm::before{content:"📊"}
+.di-ns::before{content:"🌐"}
+.di-rs::before{content:"♾"}
+.di-sd::before{content:"💻"}
+.di-pm::before{content:"📋"}
+.di-st::before{content:"🧪"}
+.di-sc::before{content:"⛓"}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="logo-text">IM8</div>
+  <span class="logo-sub">GovTech SG · ICT&amp;SS Reform</span>
+  <div id="search-wrap">
+    <span class="prompt">›</span>
+    <input id="cmd" placeholder="describe your system: e.g. kubernetes remote api public internet" autocomplete="off" spellcheck="false">
+    <button id="run-btn">ANALYSE</button>
+  </div>
+  <div class="topbar-actions">
+    <button class="icon-btn" id="btn-all">ALL CONTROLS</button>
+    <button class="icon-btn" id="btn-req">REQ ONLY</button>
+    <button class="icon-btn" id="btn-clear">CLEAR</button>
+  </div>
+</div>
+
+<!-- STATUSBAR -->
+<div id="statusbar">
+  <div class="status-item"><div class="dot" id="status-dot"></div><span id="status-txt">ready</span></div>
+  <div class="status-item" id="sb-match" style="display:none"><span id="sb-match-txt"></span></div>
+  <div id="sb-right">
+    <span>IM8 Reform · Low-Risk Cloud</span>
+    <span>Last updated 09 Feb 2026</span>
+    <a href="https://info.standards.tech.gov.sg/control-catalog/" target="_blank" style="color:var(--cyan);text-decoration:none">↗ Official Catalog</a>
+  </div>
+</div>
+
+<!-- FILTER BAR (domain chips) -->
+<div id="filterbar">
+  <span class="filter-label">DOMAIN</span>
+  <div id="domain-chips"></div>
+</div>
+
+<!-- MAIN -->
+<div id="container">
+  <!-- LEFT: controls list -->
+  <div id="left">
+    <!-- Context section -->
+    <div id="ctx-section" style="display:none">
+      <div class="panel-header">
+        <span class="chevron">▼</span> Keywords
+      </div>
+      <div class="panel-body" id="ctx-body"></div>
+    </div>
+
+    <!-- Domains section -->
+    <div id="dom-section" style="display:none">
+      <div class="panel-header">
+        <span class="chevron">▼</span> Inferred Domains
+      </div>
+      <div class="panel-body" id="dom-body"></div>
+    </div>
+
+    <!-- Controls list -->
+    <div id="list-section">
+      <div class="panel-header" id="list-hdr">
+        <span class="chevron" style="display:none"></span>
+        <span id="list-hdr-txt">Controls</span>
+        <span class="panel-count" id="list-count"></span>
+      </div>
+      <div class="panel-body" id="list-body">
+        <div class="left-empty">Type a query above<br>or click ALL CONTROLS</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESIZE HANDLE -->
+  <div id="resize"></div>
+
+  <!-- RIGHT: detail or landing -->
+  <div id="right">
+    <div id="landing">
+      <div class="ascii-logo">
+┌────────────────────────────────────────┐<br>
+│   IM8 ARCHITECT COPILOT  ·  v2.0       │<br>
+│   GovTech Singapore ICT&amp;SS Reform      │<br>
+└────────────────────────────────────────┘
+      </div>
+      <div class="landing-title">Singapore Government Control Catalog</div>
+      <div class="landing-sub">
+        Describe your system architecture in plain language.<br>
+        The copilot maps it to real IM8 controls from <code>info.standards.tech.gov.sg</code>.
+      </div>
+      <div class="landing-examples">
+        <div class="ex-chip">remote kubernetes api public</div>
+        <div class="ex-chip">container image scanning</div>
+        <div class="ex-chip">database encryption backup</div>
+        <div class="ex-chip">admin MFA access</div>
+        <div class="ex-chip">network segmentation</div>
+        <div class="ex-chip">logging & monitoring</div>
+        <div class="ex-chip">web app security</div>
+        <div class="ex-chip">CI/CD supply chain</div>
+      </div>
+      <div style="margin-top:14px;color:var(--muted2);font-size:11px">Press <code>Enter</code> or click <strong style="color:var(--green)">ANALYSE</strong> · Click domain chips to browse all controls</div>
+      <div class="cursor" style="margin-top:10px;font-size:14px">█</div>
+    </div>
+    <div id="detail" style="display:none"></div>
+  </div>
+</div>
+
+
+</body>
+</html>
